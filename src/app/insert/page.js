@@ -1,5 +1,4 @@
 "use client";
-
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -58,6 +57,12 @@ export default function Insert() {
       [name]: value,
     });
   };
+
+  const handleAuthChange = e => {
+    const { name, value } = e.target;
+    setAuthform(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleFileChange = e => {
     setThumbnail(e.target.files[0]);
   };
@@ -74,15 +79,34 @@ export default function Insert() {
       console.log("파일 업로드 성공:");
     }
   }
+  //로그인 진행
+  const handleLogin = async e => {
+    e.preventDefault();
+    const { data, error } = await supabase.auth.signInWithPassword(authForm);
+    if (error) {
+      alert("로그인 실패", error.message);
+    } else {
+      alert("로그인 성공");
+      router.refresh();
+    }
+  };
+
   if (!user) {
     return (
       <div className="about_content shadow">
         <h2>관리자 로그인</h2>
         <div className="contact_form">
-          <form action="">
+          <form onSubmit={handleLogin}>
             <p className="field">
               <label htmlFor="email">이메일</label>
-              <input type="email" id="email" name="email" placeholder="email" required />
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="email"
+                required
+                onChange={handleAuthChange}
+              />
             </p>
             <p className="field">
               <label htmlFor="password">비밀번호</label>
@@ -92,6 +116,7 @@ export default function Insert() {
                 name="password"
                 placeholder="비밀번호"
                 required
+                onChange={handleAuthChange}
               />
             </p>
             <p className="submit">
