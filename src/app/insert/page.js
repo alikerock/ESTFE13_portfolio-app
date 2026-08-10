@@ -52,6 +52,18 @@ export default function Insert() {
     })();
   }, [supabase.auth]);
 
+  const resetForm = () => {
+    setPortfolio(INITIAL_PORTFOLIO);
+    setPortfolioImages(createInitialImages());
+    setThumbnail(null);
+
+    Object.values(fileRef.current).forEach(el => {
+      if (el) {
+        el.value = "";
+      }
+    });
+  };
+
   async function insertData(e) {
     e.preventDefault();
 
@@ -68,16 +80,18 @@ export default function Insert() {
     //2. portfolio 테이블 저장
     const { data: insertedPortfolio, error } = await supabase
       .from("portfolio")
-      .insert({ ...formData, thumbnail: thumbnailPath }) //글 등록
+      .insert({ ...portfolio, thumbnail: thumbnailPath }) //글 등록
       .select("id") //등록한 글의 id 조회
       .single();
 
     if (error) {
       console.log(error);
+      await supabase.storage.from("portfolio").remove([thumbnailPath]);
+      alert(`대표 이미지 입력 실패:${error.message}`);
     } else {
-      console.log("데이터 입력 성공");
-      router.push("/");
-      router.refresh();
+      // console.log("데이터 입력 성공");
+      // router.push("/");
+      // router.refresh();
     }
     const portfolioId = insertedPortfolio.id; //새글의 id 할당
     const imageRows = [];
@@ -117,6 +131,9 @@ export default function Insert() {
         alert(`대표 이미지 입력 실패:${error.message}`);
       }
     }
+    //글 등록 성공시 - 모든 입력값 초기화
+    alert("글 등록 성공");
+    resetForm();
   }
   const handlePortfolioChange = e => {
     const { name, value } = e.target;
@@ -135,7 +152,7 @@ export default function Insert() {
   const handlePortfolioDescChange = index => e => {
     const { value } = e.target;
     setPortfolioImages(prev =>
-      prev.map((image, idx) => (index === idx ? { ...image, decription: value } : image)),
+      prev.map((image, idx) => (index === idx ? { ...image, description: value } : image)),
     );
   };
 
@@ -189,6 +206,7 @@ export default function Insert() {
                 id="email"
                 name="email"
                 placeholder="email"
+                value={authForm.email}
                 required
                 onChange={handleAuthChange}
               />
@@ -198,6 +216,7 @@ export default function Insert() {
               <input
                 type="password"
                 id="password"
+                value={authForm.password}
                 name="password"
                 placeholder="비밀번호"
                 required
@@ -225,6 +244,7 @@ export default function Insert() {
               id="title"
               name="title"
               placeholder="프로젝트 이름"
+              value={portfolio.title}
               required
               onChange={handlePortfolioChange}
             />
@@ -234,6 +254,7 @@ export default function Insert() {
             <textarea
               name="content"
               id="content"
+              value={portfolio.content}
               cols="30"
               rows="10"
               placeholder="프로젝트 설명"
@@ -246,6 +267,7 @@ export default function Insert() {
             <input
               type="url"
               id="url"
+              value={portfolio.url}
               name="url"
               placeholder="프로젝트 주소"
               onChange={handlePortfolioChange}
@@ -256,6 +278,7 @@ export default function Insert() {
             <textarea
               name="review"
               id="review"
+              value={portfolio.review}
               cols="30"
               rows="10"
               placeholder="프로젝트 후기"
@@ -267,6 +290,7 @@ export default function Insert() {
             <input
               type="text"
               id="reviewer"
+              value={portfolio.reviewer}
               name="reviewer"
               placeholder="후기 글쓴이"
               onChange={handlePortfolioChange}
@@ -303,7 +327,7 @@ export default function Insert() {
               name="rep2_img"
               accept="image/*"
               ref={element => {
-                fileRef.current.image1 = element;
+                fileRef.current.image2 = element;
               }}
               onChange={handlePortfolioFileChange(1)}
             />
